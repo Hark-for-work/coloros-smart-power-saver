@@ -1,0 +1,8 @@
+*.log
+*.log.1
+*.err
+*.bak
+state
+lock
+count
+last_on
