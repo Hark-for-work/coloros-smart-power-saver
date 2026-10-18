@@ -1,6 +1,6 @@
 id=coloros_smart_power_saver
 name=ColorOS Smart Screen-Off Power Saver
-version=v1.6.1
-versionCode=10
+version=v1.7
+versionCode=11
 author=Deepseek v4.1 Flash & Codex
-description=息屏智能延迟进入系统省电（电量>=45% 延迟4分钟，<45% 延迟2分钟），亮屏立即退出；充电豁免；不覆盖用户手动开启的省电；自动记录开启次数。
+description=息屏智能延迟进入系统省电（电量>=45% 延迟4分钟，<45% 延迟2分钟），开启省电时同步关闭蓝牙、解除时恢复；亮屏5秒后退出；充电豁免；不覆盖用户手动开启的省电；自动记录开启次数。
