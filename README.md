@@ -3,7 +3,7 @@
 适用于 ColorOS / Android 平板（Magisk / KernelSU / APatch）的息屏智能省电模块。
 息屏后按规则延迟调用系统省电模式，亮屏后延迟 5 秒自动解除，充电时完全豁免，不碰用户自己开启的省电。
 
-当前版本：**v1.7**（versionCode 11）  
+当前版本：**v1.7.1**（versionCode 12）  
 作者：Deepseek v4.1 Flash & Codex
 
 ## 功能
@@ -36,7 +36,7 @@
 
 ## 安装
 
-1. 下载 `dist/ColorOS_Smart_Power_Saver_v1.7.zip`
+1. 下载 `dist/ColorOS_Smart_Power_Saver_v1.7.1.zip`
 2. 在 Magisk / KernelSU / APatch 管理器中选择"从本地安装"
 3. 重启设备（Magisk 会在 late_start service 阶段自动拉起守护进程）
 
@@ -92,6 +92,7 @@ tail -n 10 $R/service.log
 
 | 版本 | 说明 |
 | --- | --- |
+| v1.7.1 | 修复蓝牙恢复竞态；开机还原未释放的 sticky；测试脚本不再覆盖 sticky |
 | v1.7 | 开启省电时同步关闭蓝牙，解除时恢复；有已连接设备时跳过 |
 | v1.6.1 | 延迟规则优先级化：电量 <45% 直接 2 分钟；>=45% 时按亮屏时长（<5 分钟 2 分钟 / >=5 分钟 4 分钟） |
 | v1.6 | 亮屏 5 秒后才解除省电；引入亮屏时长判定；修正单实例锁匹配过宽的问题 |

@@ -1,5 +1,5 @@
 #!/system/bin/sh
-# ColorOS 息屏智能省电守护（v1.7）
+# ColorOS 息屏智能省电守护（v1.7.1）
 # 仅调用系统电池省电模式，并在开启省电时关闭蓝牙、解除时恢复；不改内核参数、不改系统文件、不持有 wakelock。
 
 RUNDIR="/data/adb/coloros_smart_power_saver"
@@ -342,7 +342,7 @@ case "$(get_wakefulness)" in
     Awake) date +%s > "$LAST_ON_FILE" 2>/dev/null ;;
     *) : > "$LAST_ON_FILE" 2>/dev/null ;;
 esac
-log "=== ColorOS 省电守护启动（v1.7，累计自动开启 $(get_count) 次） ==="
+log "=== ColorOS 省电守护启动（v1.7.1，累计自动开启 $(get_count) 次） ==="
 
 # 事件监听（自愈）：screen_toggled payload 0=灭屏 1=亮屏；解析失败回退 dumpsys。
 # logcat 管道一旦退出（logd 重启、被系统清理、读取被拒等）自动重启，并把 stderr 落盘供排查。
