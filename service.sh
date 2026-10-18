@@ -326,6 +326,15 @@ while [ "$(getprop sys.boot_completed)" != "1" ]; do
 done
 sleep 10
 
+# 上次在模块持有省电（on:*）时重启/掉电：还原当时保存的 low_power_sticky，避免用户原值丢失
+case "$(read_state)" in
+    on:*)
+        sticky_saved=$(read_state); sticky_saved=${sticky_saved#on:}
+        [ -n "$sticky_saved" ] || sticky_saved=0
+        settings put global low_power_sticky "$sticky_saved" 2>/dev/null
+        log "开机：上次退出时模块仍持有省电，已还原 low_power_sticky=${sticky_saved}"
+        ;;
+esac
 write_state off
 # 上次运行期间由本模块关掉的蓝牙（例如省电中重启），开机后恢复
 bt_restore
