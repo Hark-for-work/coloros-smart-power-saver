@@ -21,6 +21,8 @@ fi
 echo
 echo "== 2. 测试前状态 =="
 BEFORE=$(settings get global low_power 2>/dev/null | tr -d ' \r\n')
+STICKY_BEFORE=$(settings get global low_power_sticky 2>/dev/null | tr -dc '01')
+[ -n "$STICKY_BEFORE" ] || STICKY_BEFORE=0
 echo "low_power=$BEFORE"
 echo "low_power_sticky=$(settings get global low_power_sticky 2>/dev/null)"
 echo "low_power_trigger_level=$(settings get global low_power_trigger_level 2>/dev/null)"
@@ -66,10 +68,10 @@ else
 fi
 
 echo
-echo "== 6. 恢复（确保省电关闭、设置回 0） =="
+echo "== 6. 恢复（确保省电关闭、sticky 还原为测试前的值） =="
 cmd power set-mode 0
 settings put global low_power 0
-settings put global low_power_sticky 0
+settings put global low_power_sticky "$STICKY_BEFORE"
 sleep 1
 echo "恢复后 low_power=$(settings get global low_power 2>/dev/null)"
 echo "恢复后 low_power_sticky=$(settings get global low_power_sticky 2>/dev/null)"
