@@ -1,6 +1,6 @@
 #!/system/bin/sh
-# ColorOS 息屏智能省电守护（审计修正版 v1.6.1）
-# 仅调用系统电池省电模式；不改内核参数、不改系统文件、不持有 wakelock。
+# ColorOS 息屏智能省电守护（v1.7）
+# 仅调用系统电池省电模式，并在开启省电时关闭蓝牙、解除时恢复；不改内核参数、不改系统文件、不持有 wakelock。
 
 RUNDIR="/data/adb/coloros_smart_power_saver"
 STATE_FILE="$RUNDIR/state"
@@ -9,6 +9,7 @@ LOGFILE="$RUNDIR/service.log"
 COUNT_FILE="$RUNDIR/count"
 HISTORY_FILE="$RUNDIR/history.log"
 LAST_ON_FILE="$RUNDIR/last_on"
+BT_FLAG_FILE="$RUNDIR/bt_off"
 
 mkdir -p "$RUNDIR" 2>/dev/null
 chmod 700 "$RUNDIR" 2>/dev/null
@@ -40,6 +41,65 @@ inc_count() {
     rotate_file "$HISTORY_FILE"
     echo "[$(date '+%Y-%m-%d %H:%M:%S' 2>/dev/null)] level=$1 delay=$2 count=$n" >> "$HISTORY_FILE"
     echo "$n"
+}
+
+# ---------- 蓝牙联动：本模块开启省电时关闭蓝牙，解除省电时恢复 ----------
+# 只有“蓝牙原本开着且由本模块关掉”时才写 bt_off 标记，也只有带标记时才恢复，
+# 不会打开用户本来就关着的蓝牙。息屏时若有已连接的蓝牙设备（耳机/手表/键盘等）则跳过，不打断使用。
+get_bt_state() {
+    v=$(settings get global bluetooth_on 2>/dev/null | tr -d ' \r\n')
+    [ "$v" = "1" ] && echo 1 || echo 0
+}
+
+bt_has_connection() {
+    dumpsys bluetooth_manager 2>/dev/null | grep -Eq 'ConnectionState: *STATE_CONNECTED' && echo 1 || echo 0
+}
+
+# $1 = enable / disable；优先 cmd bluetooth_manager，失败回退 svc bluetooth；最多回读 8 秒
+bt_set() {
+    want=0
+    [ "$1" = "enable" ] && want=1
+    cmd bluetooth_manager "$1" >/dev/null 2>&1 || svc bluetooth "$1" >/dev/null 2>&1
+    tries=0
+    while [ "$tries" -lt 8 ]; do
+        [ "$(get_bt_state)" = "$want" ] && return 0
+        sleep 1
+        tries=$((tries + 1))
+    done
+    # 第一种接口未生效时再试一次另一种
+    svc bluetooth "$1" >/dev/null 2>&1
+    sleep 2
+    [ "$(get_bt_state)" = "$want" ]
+}
+
+bt_off_for_saver() {
+    [ "$(get_bt_state)" = "1" ] || { log "蓝牙：原本已关闭，无需处理"; return 0; }
+    if [ "$(bt_has_connection)" = "1" ]; then
+        log "蓝牙：有已连接设备，跳过关闭"
+        return 0
+    fi
+    # 先写标记再关闭：关闭过程中若亮屏触发解除，恢复逻辑也能看到标记
+    echo 1 > "$BT_FLAG_FILE" 2>/dev/null
+    if bt_set disable; then
+        log "蓝牙：已随省电模式关闭"
+    else
+        rm -f "$BT_FLAG_FILE" 2>/dev/null
+        log "蓝牙：关闭未生效（系统受限或不支持），保持原状"
+    fi
+}
+
+bt_restore() {
+    [ -f "$BT_FLAG_FILE" ] || return 0
+    rm -f "$BT_FLAG_FILE" 2>/dev/null
+    if [ "$(get_bt_state)" = "1" ]; then
+        log "蓝牙：已被手动打开，无需恢复"
+        return 0
+    fi
+    if bt_set enable; then
+        log "蓝牙：已恢复开启"
+    else
+        log "蓝牙：恢复开启未生效，请手动打开"
+    fi
 }
 
 # ---------- 单实例保护 ----------
@@ -141,6 +201,7 @@ disable_ours() {
     fi
     settings put global low_power_sticky "$sticky_saved" 2>/dev/null
     write_state off
+    bt_restore
 }
 
 handle_screen_off() {
@@ -232,6 +293,7 @@ handle_screen_off() {
             settings put global low_power_sticky 0 2>/dev/null
             n=$(inc_count "$bat" "$delay")
             log "息屏 ${delay}s：已开启系统省电模式（累计自动开启第 ${n} 次，电量 ${bat}%）"
+            bt_off_for_saver
         else
             write_state off
             log "开启未生效（充电中/系统受限/不支持），放弃本次"
@@ -257,11 +319,13 @@ done
 sleep 10
 
 write_state off
+# 上次运行期间由本模块关掉的蓝牙（例如省电中重启），开机后恢复
+bt_restore
 case "$(get_wakefulness)" in
     Awake) date +%s > "$LAST_ON_FILE" 2>/dev/null ;;
     *) : > "$LAST_ON_FILE" 2>/dev/null ;;
 esac
-log "=== ColorOS 省电守护启动（v1.6.1，累计自动开启 $(get_count) 次） ==="
+log "=== ColorOS 省电守护启动（v1.7，累计自动开启 $(get_count) 次） ==="
 
 # 事件监听（自愈）：screen_toggled payload 0=灭屏 1=亮屏；解析失败回退 dumpsys。
 # logcat 管道一旦退出（logd 重启、被系统清理、读取被拒等）自动重启，并把 stderr 落盘供排查。
