@@ -45,14 +45,10 @@ inc_count() {
 
 # ---------- 蓝牙联动：本模块开启省电时关闭蓝牙，解除省电时恢复 ----------
 # 只有“蓝牙原本开着且由本模块关掉”时才写 bt_off 标记，也只有带标记时才恢复，
-# 不会打开用户本来就关着的蓝牙。息屏时若有已连接的蓝牙设备（耳机/手表/键盘等）则跳过，不打断使用。
+# 不会打开用户本来就关着的蓝牙。即使有已连接的蓝牙设备也会断开关闭。
 get_bt_state() {
     v=$(settings get global bluetooth_on 2>/dev/null | tr -d ' \r\n')
     [ "$v" = "1" ] && echo 1 || echo 0
-}
-
-bt_has_connection() {
-    dumpsys bluetooth_manager 2>/dev/null | grep -Eq 'ConnectionState: *STATE_CONNECTED' && echo 1 || echo 0
 }
 
 # $1 = enable / disable；优先 cmd bluetooth_manager，失败回退 svc bluetooth；最多回读 8 秒
@@ -74,10 +70,6 @@ bt_set() {
 
 bt_off_for_saver() {
     [ "$(get_bt_state)" = "1" ] || { log "蓝牙：原本已关闭，无需处理"; return 0; }
-    if [ "$(bt_has_connection)" = "1" ]; then
-        log "蓝牙：有已连接设备，跳过关闭"
-        return 0
-    fi
     # 先写标记再关闭：关闭过程中若亮屏触发解除，恢复逻辑也能看到标记
     echo 1 > "$BT_FLAG_FILE" 2>/dev/null
     if bt_set disable; then
