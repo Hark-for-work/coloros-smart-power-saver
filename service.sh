@@ -82,6 +82,14 @@ bt_off_for_saver() {
     echo 1 > "$BT_FLAG_FILE" 2>/dev/null
     if bt_set disable; then
         log "蓝牙：已随省电模式关闭"
+        # 关闭过程中若省电已被解除（亮屏较快时恢复逻辑可能先跑完），这里补一次恢复，避免蓝牙一直关着
+        case "$(read_state)" in
+            on:*) ;;
+            *)
+                rm -f "$BT_FLAG_FILE" 2>/dev/null
+                bt_set enable && log "蓝牙：关闭期间省电已解除，已重新开启"
+                ;;
+        esac
     else
         rm -f "$BT_FLAG_FILE" 2>/dev/null
         log "蓝牙：关闭未生效（系统受限或不支持），保持原状"
