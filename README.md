@@ -3,7 +3,7 @@
 适用于 ColorOS / Android 平板（Magisk / KernelSU / APatch）的息屏智能省电模块。
 息屏后按规则延迟调用系统省电模式，亮屏后延迟 5 秒自动解除，充电时完全豁免，不碰用户自己开启的省电。
 
-当前版本：**v1.6.1**（versionCode 10）  
+当前版本：**v1.7**（versionCode 11）  
 作者：Deepseek v4.1 Flash & Codex
 
 ## 功能
@@ -19,6 +19,7 @@
 
 **其他行为**
 
+- **蓝牙联动**：本模块开启省电后同步关闭蓝牙，解除省电时恢复；有已连接的蓝牙设备时跳过，用户原本关着的蓝牙不会被打开。
 - 亮屏后**延迟 5 秒**才解除本模块开启的省电；这 5 秒内又息屏则保持省电不动。
 - 亮屏瞬间立即取消待触发的倒计时。
 - 充电/供电状态下息屏不触发（`AC/USB/Wireless/Dock powered: true` 均视为供电）。
@@ -35,7 +36,7 @@
 
 ## 安装
 
-1. 下载 `dist/ColorOS_Smart_Power_Saver_v1.6.1.zip`
+1. 下载 `dist/ColorOS_Smart_Power_Saver_v1.7.zip`
 2. 在 Magisk / KernelSU / APatch 管理器中选择"从本地安装"
 3. 重启设备（Magisk 会在 late_start service 阶段自动拉起守护进程）
 
@@ -49,6 +50,7 @@
 | `count` | 累计自动开启次数（纯数字，可手动重置：`echo 0 > count`） |
 | `history.log` | 每次开启明细：时间 / 电量 / 延时 / 第几次，超过 512 KB 轮转 |
 | `service.log` | 运行日志，超过 512 KB 轮转为 `service.log.1` |
+| `bt_off` | 存在即表示蓝牙由本模块关闭，解除省电时据此恢复 |
 | `last_on` | 最近一次亮屏时间戳（用于计算亮屏时长） |
 | `logcat.err` | 事件监听进程的 stderr（排查监听退出原因） |
 
@@ -77,7 +79,7 @@ tail -n 10 $R/service.log
 
 - 只调用系统公开接口 `cmd power set-mode 1/0`，不降频、不改内核参数、不替换系统文件。
 - 只写自己的两个目录：`/data/adb/modules/coloros_smart_power_saver/`（模块自身）和 `/data/adb/coloros_smart_power_saver/`（运行状态）。
-- 只读取 `settings`/`dumpsys`/`logcat`，除 `low_power_sticky` 的保存与还原外不修改任何设置。
+- 只读取 `settings`/`dumpsys`/`logcat`，除 `low_power_sticky` 的保存与还原、蓝牙开关的关闭与恢复外不修改任何设置。
 - 卸载时只删除自己的运行状态目录，不触碰系统状态。
 
 ## 已知限制
@@ -90,6 +92,7 @@ tail -n 10 $R/service.log
 
 | 版本 | 说明 |
 | --- | --- |
+| v1.7 | 开启省电时同步关闭蓝牙，解除时恢复；有已连接设备时跳过 |
 | v1.6.1 | 延迟规则优先级化：电量 <45% 直接 2 分钟；>=45% 时按亮屏时长（<5 分钟 2 分钟 / >=5 分钟 4 分钟） |
 | v1.6 | 亮屏 5 秒后才解除省电；引入亮屏时长判定；修正单实例锁匹配过宽的问题 |
 | v1.5 | 开启/关闭回读最多轮询 10 秒；`on:*` 轮询由 60 秒放宽到 120 秒 |
