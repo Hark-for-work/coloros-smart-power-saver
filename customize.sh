@@ -1,6 +1,6 @@
 ui_print "****************************************"
 ui_print "  ColorOS Smart Screen-Off Power Saver  "
-ui_print "                v1.7.2                    "
+ui_print "                v1.7.3                    "
 ui_print "****************************************"
 ui_print "- 纯用户态脚本，无 system/vendor 替换"
 ui_print "- 仅调用系统省电模式接口 cmd power set-mode"
