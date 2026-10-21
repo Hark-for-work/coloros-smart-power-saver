@@ -3,7 +3,7 @@
 适用于 ColorOS / Android 平板（Magisk / KernelSU / APatch）的息屏智能省电模块。
 息屏后按规则延迟调用系统省电模式，亮屏后延迟 5 秒自动解除，充电时完全豁免，不碰用户自己开启的省电。
 
-当前版本：**v1.7.3**（versionCode 14）  
+当前版本：**v1.7.4**（versionCode 15）  
 作者：Deepseek v4.1 Flash & Codex
 
 ## 功能
@@ -36,7 +36,7 @@
 
 ## 安装
 
-1. 下载 `dist/ColorOS_Smart_Power_Saver_v1.7.3.zip`
+1. 下载 `dist/ColorOS_Smart_Power_Saver_v1.7.4.zip`
 2. 在 Magisk / KernelSU / APatch 管理器中选择"从本地安装"
 3. 重启设备（Magisk 会在 late_start service 阶段自动拉起守护进程）
 
@@ -51,6 +51,7 @@
 | `history.log` | 每次开启明细：时间 / 电量 / 延时 / 第几次，超过 512 KB 轮转 |
 | `service.log` | 运行日志，超过 512 KB 轮转为 `service.log.1` |
 | `bt_off` | 存在即表示蓝牙由本模块关闭，解除省电时据此恢复 |
+| `bt_want` | 模块当前期望的蓝牙状态（off/on），由串行 worker 落实 |
 | `bt_resume` | 亮屏时已临时恢复蓝牙、省电仍在 5 秒宽限期；期间再息屏据此重新关闭蓝牙 |
 | `last_on` | 最近一次亮屏时间戳（用于计算亮屏时长） |
 | `logcat.err` | 事件监听进程的 stderr（排查监听退出原因） |
@@ -93,6 +94,7 @@ tail -n 10 $R/service.log
 
 | 版本 | 说明 |
 | --- | --- |
+| v1.7.4 | 修复亮屏时偶发蓝牙不自动恢复（蓝牙动作串行化） |
 | v1.7.3 | 亮屏立即恢复蓝牙；5 秒内再息屏重新关闭蓝牙 |
 | v1.7.2 | 有已连接蓝牙设备时也关闭蓝牙 |
 | v1.7.1 | 修复蓝牙恢复竞态；开机还原未释放的 sticky；测试脚本不再覆盖 sticky |
